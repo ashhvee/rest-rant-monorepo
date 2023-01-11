@@ -44,6 +44,7 @@ router.get('/:placeId', async (req, res) => {
     }
 })
 
+
 router.put('/:placeId', async (req, res) => {
     let placeId = Number(req.params.placeId)
     if (isNaN(placeId)) {
@@ -61,6 +62,7 @@ router.put('/:placeId', async (req, res) => {
         }
     }
 })
+
 
 router.delete('/:placeId', async (req, res) => {
     let placeId = Number(req.params.placeId)
@@ -80,6 +82,7 @@ router.delete('/:placeId', async (req, res) => {
         }
     }
 })
+
 
 router.post('/:placeId/comments', async (req, res) => {
     const placeId = Number(req.params.placeId)
@@ -110,22 +113,6 @@ router.post('/:placeId/comments', async (req, res) => {
     })
 })
 
-    // let currentUser;
-    // try {
-    //     const [method, token] = req.headers.authorization.split(' ')
-    //     if (method == 'Bearer') {
-    //         const result = await jwt.decode(process.env.JWT_SECRET, token)
-    //         const { id } = result.value
-    //         currentUser = await User.findOne({
-    //             where: {
-    //                 userId: id
-    //             }
-    //         })
-    //     }
-    // } catch {
-    //     currentUser = null
-    // }
-
 
 router.delete('/:placeId/comments/:commentId', async (req, res) => {
     let placeId = Number(req.params.placeId)
@@ -133,19 +120,21 @@ router.delete('/:placeId/comments/:commentId', async (req, res) => {
 
     if (isNaN(placeId)) {
         res.status(404).json({ message: `Invalid id "${placeId}"` })
-    } else if (isNaN(commentId)) {
-        res.status(404).json({ message: `Invalid id "${commentId}"` })
-    } else {
-        const comment = await Comment.findOne({
-            where: { commentId: commentId, placeId: placeId }
-        })
-        if (!comment) {
-            res.status(404).json({ message: `Could not find comment with id "${commentId}" for place with id "${placeId}"` })
+        } else if (isNaN(commentId)) {
+            res.status(404).json({ message: `Invalid id "${commentId}"` })
         } else {
-            await comment.destroy()
-            res.json(comment)
+            const comment = await Comment.findOne({
+                where: { commentId: commentId, placeId: placeId }
+            })
+            if (!comment) {
+                    res.status(404).json({ message: `Could not find comment with id "${commentId}" for place with id "${placeId}"` })
+            } else if (comment.authorId !== req.currentUser?.userId){
+                    res.status(403).json({ message: `You do not have permission to delete comment "${comment.commentId}"` })
+            } else {
+                await comment.destroy()
+                res.json(comment)
+            }
         }
-    }
 })
 
 
